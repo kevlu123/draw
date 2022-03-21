@@ -7,6 +7,7 @@
 #include <mutex>
 #include <functional>
 #include <cstring>
+#include <optional>
 #include "Stopwatch.h"
 
 #if defined(__ANDROID__)
@@ -35,6 +36,7 @@ struct Key {
 
 struct CursorPos {
 	int x, y;
+	float pressure;
 };
 
 struct Colour {
@@ -111,6 +113,7 @@ public:
 	bool GetAnyKeyDown(Key& key) const;
 	std::vector<CursorPos> GetCursorPositions() const;
 	void SetInputEnabled(bool enabled);
+	CursorPos lastTouchPos{};
 private:
 	void UpdateInput();
 	bool PollEvents();

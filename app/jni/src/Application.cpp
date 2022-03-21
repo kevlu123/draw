@@ -252,7 +252,10 @@ void Application::UpdateInput() {
 			k.second = KeyState::NotHeld;
 	}
 
-	eventQueue = std::move(eventQueueBuffer);
+	while (!eventQueueBuffer.empty()) {
+        eventQueue.push(eventQueueBuffer.front());
+        eventQueueBuffer.pop();
+    }
 }
 
 bool Application::GetAnyKeyDown(Key& key) const {
@@ -368,7 +371,7 @@ bool Application::PollEvents() {
 		case SDL_FINGERDOWN: {
 			int x = (int)(ev.tfinger.x * GetClientWidth());
 			int y = (int)(ev.tfinger.y * GetClientHeight());
-			touches[ev.tfinger.fingerId] = { x, y };
+			touches[ev.tfinger.fingerId] = { x, y, ev.tfinger.pressure };
 			break;
 		}
 
@@ -376,6 +379,9 @@ bool Application::PollEvents() {
 			if (GetKeyDown(Key::Mouse())) {
 				eventQueueBuffer.push(ev);
 			} else {
+				int x = (int)(ev.tfinger.x * GetClientWidth());
+				int y = (int)(ev.tfinger.y * GetClientHeight());
+				lastTouchPos = { x, y, ev.tfinger.pressure };
 				touches.erase(ev.tfinger.fingerId);
 			}
 			break;
@@ -384,7 +390,7 @@ bool Application::PollEvents() {
 		case SDL_FINGERMOTION: {
 			int x = (int)(ev.tfinger.x * GetClientWidth());
 			int y = (int)(ev.tfinger.y * GetClientHeight());
-			touches.at(ev.tfinger.fingerId) = { x, y };
+			touches.at(ev.tfinger.fingerId) = { x, y, ev.tfinger.pressure };
 			break;
 		}
 		}

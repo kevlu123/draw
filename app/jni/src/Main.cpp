@@ -58,6 +58,7 @@ struct App : public Application {
 		auto cursorPositions = GetCursorPositions();
 		if (cursorPositions.empty()) {
 		    if (!undoHistory.empty() && GetKeyUp(Key::Mouse())) {
+				OnPenDrag({ lastTouchPos.x, lastTouchPos.y });
 		        OnPenUp();
 		    }
 		} else {
