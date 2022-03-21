@@ -76,7 +76,6 @@ struct App : public Application {
 		    backButtonTimer.Restart();
 		} else if (backButtonTimer.Time() >= 0.3f) {
 		    ClearCanvas();
-            backButtonTimer.Restart();
 		}
 
 		canvasTex->Draw();
