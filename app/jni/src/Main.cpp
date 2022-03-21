@@ -5,6 +5,7 @@
 #include <vector>
 #include <deque>
 #include <stack>
+#include <cmath>
 
 Colour operator+(const Colour& lhs, const Colour& rhs) {
 	return Colour {
@@ -58,11 +59,13 @@ struct App : public Application {
 		auto cursorPositions = GetCursorPositions();
 		if (cursorPositions.empty()) {
 		    if (!undoHistory.empty() && GetKeyUp(Key::Mouse())) {
+		        pen.pressure = lastTouchPos.pressure;
 				OnPenDrag({ lastTouchPos.x, lastTouchPos.y });
 		        OnPenUp();
 		    }
 		} else {
 			Veci cursPos = Veci{ cursorPositions[0].x, cursorPositions[0].y };
+			pen.pressure = cursorPositions[0].pressure;
 			if (GetKeyDown(Key::Mouse())) {
 			    OnPenDown(cursPos);
 			} else {
@@ -78,6 +81,8 @@ struct App : public Application {
 		} else if (backButtonTimer.Time() >= 0.3f) {
 		    ClearCanvas();
 		}
+
+		pen.Update();
 
 		canvasTex->Draw();
 
@@ -113,7 +118,7 @@ struct App : public Application {
 	}
 
 	void ClearCanvas() {
-	    undoHistory.emplace_back();
+	    /*undoHistory.emplace_back();
 
 	    for (int y = 0; y < screenSize.y; y++) {
             for (int x = 0; x < screenSize.x; x++) {
@@ -123,11 +128,11 @@ struct App : public Application {
 
         if (undoHistory.back().empty()) {
             undoHistory.pop_back();
-        }
+        }*/
 
-        //canvas.clear();
-        //canvas.resize(screenSize.x * screenSize.y, Colour::Black());
-        //undoHistory.clear();
+        canvas.clear();
+        canvas.resize(screenSize.x * screenSize.y, Colour::Black());
+        undoHistory.clear();
 
 	    CommitCanvas();
 	}
@@ -179,11 +184,12 @@ struct App : public Application {
 
 	void DrawCircle(Veci origin) {
 		if (pen.dragFrom.x < screenSize.x - 100) {
-			int radius = pen.radius;
+			int radius = (int)((float)pen.radius * pen.EffectivePressure());
 			for (int y = -radius; y <= radius; y++)
 				for (int x = -radius; x <= radius; x++)
 					if (x * x + y * y <= radius * radius) {
-						float p = 1.0f - (float) (x * x + y * y) / (float) (radius * radius);
+						float p = 1.0f;// - (float) (x * x + y * y) / (float) (radius * radius);
+						//p *= * pen.EffectivePressure();
 						SetPixel(Veci{origin.x + x, origin.y + y}, p);
 					}
 		}
@@ -304,9 +310,27 @@ struct App : public Application {
 	struct Pen {
 		//Colour colour = Colour{ 0xFF, 0x72, 0x26, 0xFF };
 		Colour colour = Colour{ 0xB6, 0xC2, 0xE8, 0xFF };
-		int radius = 4;
+		int radius = 10;
 		Veci pos;
 		Veci dragFrom;
+		float pressure = 1.0f;
+		float effectivePressure = 1.0f;
+
+		void Update() {
+		    if (pressure == 1.0f) {
+		        effectivePressure = 1.0f;
+		    } else {
+                effectivePressure = (pressure - effectivePressure) * 0.3f + effectivePressure;
+            }
+		}
+
+		float EffectivePressure() const {
+		    if (effectivePressure == 1.0f) {
+		        return 0.35f; // Not using pressure sensitive device
+            } else {
+                return std::max(0.05f, std::pow(effectivePressure, 0.3f));
+		    }
+		}
 	} pen;
 };
 
